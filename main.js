@@ -15,11 +15,12 @@ renderer.shadowMap.enabled = true;  // Habilitar las sombras
 const camera = new THREE.PerspectiveCamera();
 camera.position.set(10, 10, 10);
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableZoom = false;
+// controls.enableZoom = false;
 controls.enableRotate = false;
+controls.enablePan = false;
 
 // Añadir luces
-const ambient = new THREE.AmbientLight(0xffffff, 1.5);
+const ambient = new THREE.AmbientLight(0xffffff, 1);
 scene.add(ambient);
 
 //*Postprocesado
@@ -27,7 +28,7 @@ scene.add(ambient);
 const composer = new EffectComposer(renderer)
 const renderPass =  new RenderPass(scene, camera)
 
-const bloomPass =  new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight),1,0.2,0.1);
+const bloomPass =  new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight),1,0.9,0.1);
 
 composer.addPass(renderPass)
 composer.addPass(bloomPass)
@@ -45,9 +46,15 @@ loader.load(
 
     // Configurar sombras en las mallas del modelo
     model.traverse((child) => {
-      if (child.isMesh) {
+      if (child.isMesh && child.name == "sun") {
+        child.material.emissive = new THREE.Color().setRGB( 0.7, 0.6, 0.4).multiplyScalar(0.2)
         console.log(child.material);
+      }else{
         child.castShadow = true;
+        // child.material = new THREE.MeshStandardMaterial({
+        //   color: 0xff0000,
+        //   side: THREE.DoubleSide
+        // })
       }
     });
 
