@@ -1,6 +1,6 @@
 import './style.css';
 import * as THREE from 'three';
-import { GLTFLoader, OrbitControls } from 'three/examples/jsm/Addons.js';
+import { GLTFLoader, OrbitControls, EffectComposer, ShaderPass, RenderPass, FilmPass, UnrealBloomPass, DotScreenShader, SobelOperatorShader, LuminosityShader, ColorifyShader } from 'three/examples/jsm/Addons.js';
 
 const canvas = document.querySelector('canvas');
 const scene = new THREE.Scene();
@@ -19,24 +19,20 @@ controls.enableZoom = false;
 controls.enableRotate = false;
 
 // Añadir luces
-const ambient = new THREE.AmbientLight(0xffffff, 3);
+const ambient = new THREE.AmbientLight(0xffffff, 1.5);
 scene.add(ambient);
 
-const directional = new THREE.DirectionalLight(0xffffff, 2);
-directional.position.set(0, 5, 0);
-directional.castShadow = true;
-let size = 1024;
-directional.shadow.mapSize.width = size;
-directional.shadow.mapSize.height = size;
+//*Postprocesado
 
-// Ajustar el área de la cámara de sombras
-let sombra = 10;
-directional.shadow.camera.left = -sombra;
-directional.shadow.camera.right = sombra;
-directional.shadow.camera.top = sombra;
-directional.shadow.camera.bottom = -sombra;
-scene.add(directional);
+const composer = new EffectComposer(renderer)
+const renderPass =  new RenderPass(scene, camera)
 
+const bloomPass =  new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight),1,0.2,0.1);
+
+composer.addPass(renderPass)
+composer.addPass(bloomPass)
+
+//*End Postprocesado
 let mixer;
 
 // Cargar el modelo GLTF
@@ -50,6 +46,7 @@ loader.load(
     // Configurar sombras en las mallas del modelo
     model.traverse((child) => {
       if (child.isMesh) {
+        console.log(child.material);
         child.castShadow = true;
       }
     });
@@ -93,15 +90,15 @@ loader.load(
 );
 
 // Añadir AxesHelper para referencia
-//scene.add(new THREE.AxesHelper(20));
+// scene.add(new THREE.AxesHelper(20));
 
 // Animación
 const clock = new THREE.Clock();
 function animate() {
   //const delta = clock.getDelta();
-  //const delta = 0.005
+  const delta = 0.016
   //console.log(delta)
-  const delta = 0.011    
+  // const delta = 0.011    
 
   // Actualizar el mixer de animación si existe
   if (mixer) {
@@ -109,6 +106,7 @@ function animate() {
   }
 
   renderer.render(scene, camera);
+  composer.render()
   controls.update();
 }
 
