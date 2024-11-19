@@ -1,24 +1,21 @@
 import './style.css';
 import * as THREE from 'three';
-import { GLTFLoader, OrbitControls, EffectComposer, ShaderPass, RenderPass, FilmPass, UnrealBloomPass, DotScreenShader, SobelOperatorShader, LuminosityShader, ColorifyShader } from 'three/examples/jsm/Addons.js';
+import { GLTFLoader, EffectComposer, ShaderPass, RenderPass, UnrealBloomPass } from 'three/examples/jsm/Addons.js';
+import { createCamera } from './src/core/camera';
+import { createOrbitControls } from './src/core/controls';
+import { createRenderer, resizeRendererAndCamera } from './src/core/renderer';
+import { createScene } from './src/core/scene'
 
 const canvas = document.querySelector('canvas');
-const scene = new THREE.Scene();
-
-// Configurar el renderizador
-const renderer = new THREE.WebGLRenderer({ canvas });
-renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-renderer.setPixelRatio(window.devicePixelRatio);
-renderer.shadowMap.enabled = true;  // Habilitar las sombras
-
+const scene = createScene()
+const renderer = createRenderer(canvas)
+renderer.setAnimationLoop(animate);
 // Crear cámara y controles
-const camera = new THREE.PerspectiveCamera();
-camera.position.set(10, 10, 10);
-const controls = new OrbitControls(camera, renderer.domElement);
-// controls.enableZoom = false;
-controls.enableRotate = false;
-controls.enablePan = false;
-
+const camera = createCamera()
+console.log(camera);
+// camera.position.set(10, 10, 10);
+const controls = createOrbitControls(camera, renderer);
+controls.enabled = false
 // Añadir luces
 const ambient = new THREE.AmbientLight(0xffffff, 1);
 scene.add(ambient);
@@ -48,7 +45,7 @@ loader.load(
     model.traverse((child) => {
       if (child.isMesh && child.name == "sun") {
         child.material.emissive = new THREE.Color().setRGB( 0.7, 0.6, 0.4).multiplyScalar(0.2)
-        console.log(child.material);
+        // child.material.emissive = new THREE.Color().setRGB( 0.8, 0.1, 0.8).multiplyScalar(0.5)
       }else{
         child.castShadow = true;
         // child.material = new THREE.MeshStandardMaterial({
@@ -74,11 +71,12 @@ loader.load(
     const gltfCamera = gltf.cameras?.[0];
     if (gltfCamera) {
       const parent = gltfCamera.parent;
+      console.log(parent.children[0]);
 
       // Configurar la cámara de Three.js usando la posición, rotación y escala del objeto padre
       camera.position.copy(parent.position);
-      camera.quaternion.copy(parent.quaternion);
-      camera.scale.copy(parent.scale);
+      // camera.quaternion.copy(parent.quaternion);
+      // camera.scale.copy(parent.scale);
 
       // También copiar los parámetros de la cámara del GLTF
       camera.fov = gltfCamera.fov;
@@ -86,6 +84,7 @@ loader.load(
       camera.far = gltfCamera.far;
       camera.aspect = gltfCamera.aspect;
       camera.updateProjectionMatrix();  // Actualizar la matriz de proyección
+
     }
   },
   (xhr) => {
@@ -96,17 +95,11 @@ loader.load(
   }
 );
 
-// Añadir AxesHelper para referencia
-// scene.add(new THREE.AxesHelper(20));
-
 // Animación
-const clock = new THREE.Clock();
 function animate() {
-  //const delta = clock.getDelta();
-  const delta = 0.016
-  //console.log(delta)
-  // const delta = 0.011    
 
+  resizeRendererAndCamera(renderer, camera)
+  const delta = 0.016
   // Actualizar el mixer de animación si existe
   if (mixer) {
     mixer.update(delta);
@@ -117,4 +110,4 @@ function animate() {
   controls.update();
 }
 
-renderer.setAnimationLoop(animate);
+
