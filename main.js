@@ -12,7 +12,6 @@ const renderer = createRenderer(canvas)
 renderer.setAnimationLoop(animate);
 // Crear cámara y controles
 const camera = createCamera()
-console.log(camera);
 // camera.position.set(10, 10, 10);
 const controls = createOrbitControls(camera, renderer);
 controls.enabled = false
@@ -36,7 +35,7 @@ let mixer;
 // Cargar el modelo GLTF
 const loader = new GLTFLoader();
 loader.load(
-  'avance1.1.gltf',
+  'parallax1.final.gltf',
   (gltf) => {
     const model = gltf.scene;
     scene.add(model);
@@ -44,14 +43,10 @@ loader.load(
     // Configurar sombras en las mallas del modelo
     model.traverse((child) => {
       if (child.isMesh && child.name == "sun") {
-        child.material.emissive = new THREE.Color().setRGB( 0.7, 0.6, 0.4).multiplyScalar(0.2)
+        child.material.emissive = new THREE.Color().setRGB( 0.7, 0.6, 0.4).multiplyScalar(0.3)
         // child.material.emissive = new THREE.Color().setRGB( 0.8, 0.1, 0.8).multiplyScalar(0.5)
       }else{
-        child.castShadow = true;
-        // child.material = new THREE.MeshStandardMaterial({
-        //   color: 0xff0000,
-        //   side: THREE.DoubleSide
-        // })
+        // child.castShadow = true;
       }
     });
 
@@ -71,12 +66,11 @@ loader.load(
     const gltfCamera = gltf.cameras?.[0];
     if (gltfCamera) {
       const parent = gltfCamera.parent;
-      console.log(parent.children[0]);
 
       // Configurar la cámara de Three.js usando la posición, rotación y escala del objeto padre
       camera.position.copy(parent.position);
-      // camera.quaternion.copy(parent.quaternion);
-      // camera.scale.copy(parent.scale);
+      camera.quaternion.copy(parent.quaternion);
+      camera.scale.copy(parent.scale);
 
       // También copiar los parámetros de la cámara del GLTF
       camera.fov = gltfCamera.fov;
@@ -95,11 +89,21 @@ loader.load(
   }
 );
 
+
+window.addEventListener('keydown', (event) => {
+  if (event.key.toLowerCase() === 'g') { // Detectar la tecla 'g' sin importar mayúsculas o minúsculas
+    controls.enabled = !controls.enabled; // Alternar el estado de los controles
+    console.log(`OrbitControls ${controls.enabled ? 'activado' : 'desactivado'}`);
+  }
+});
+
+
 // Animación
 function animate() {
 
-  resizeRendererAndCamera(renderer, camera)
-  const delta = 0.016
+  //TODO Remover para que el canvas sea responsive
+  // resizeRendererAndCamera(renderer, camera)
+  const delta = 0.009
   // Actualizar el mixer de animación si existe
   if (mixer) {
     mixer.update(delta);

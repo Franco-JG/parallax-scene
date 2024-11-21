@@ -1,11 +1,15 @@
 body {
+  display: flex;
   margin: 0;
   padding: 0;
+  background-color: #0A0400;
   /* height: 100vh; */
+  justify-content: center;
+  align-items: center;
 }
 
 canvas {
-  width: 100%;
+  width: 80%;
   height: 100vh;
   display: block;
 }
