@@ -19,6 +19,58 @@ controls.enabled = false
 const ambient = new THREE.AmbientLight(0xffffff, 1);
 scene.add(ambient);
 
+// Crear geometría y material para las partículas
+const particleCount = 2000; // Número de partículas
+const particleGeometry = new THREE.BufferGeometry();
+const positions = new Float32Array(particleCount * 3); // x, y, z por partícula
+
+// Generar posiciones aleatorias dentro de un área
+const areaWidth = 10; // Ancho del área donde aparecen las partículas
+const areaHeight = 5; // Altura del área
+for (let i = 0; i < particleCount; i++) {
+  positions[i * 3] = Math.random() * areaWidth - areaWidth / 2; // x
+  positions[i * 3 + 1] = Math.random() * areaHeight - areaHeight / 2; // y
+  positions[i * 3 + 2] = Math.random() * 15 ; // z, una pequeña profundidad
+}
+
+particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+// Crear una textura circular para las partículas
+const circleTexture = new THREE.TextureLoader().load('particleShape.png');
+
+// Material de las partículas
+const particleMaterial = new THREE.PointsMaterial({
+  color: 0xfc7d1c, // Marrón 0x8B4513
+  size: 0.08,
+  transparent: true,
+  opacity: 0.7,
+  depthWrite: false,
+  map: circleTexture, // Textura de círculo
+  alphaTest: 0.5, // Descartar píxeles transparentes
+  blending: THREE.NormalBlending, // Mejor efecto visual para partículas AdditiveBlending
+  sizeAttenuation: true, // Escalar según la distancia
+});
+
+// Crear el objeto de partículas
+const particles = new THREE.Points(particleGeometry, particleMaterial);
+particles.position.z = -8
+
+// Animar las partículas
+function animateParticles() {
+  const positions = particleGeometry.attributes.position.array;
+  for (let i = 0; i < particleCount; i++) {
+    positions[i * 3] += 0.04; // Mover hacia la derecha (eje X)
+
+    // Reiniciar posición cuando sale del área
+    if (positions[i * 3] > areaWidth / 2) {
+      positions[i * 3] = -areaWidth / 2;
+    }
+  }
+  particleGeometry.attributes.position.needsUpdate = true; // Notificar a Three.js que se actualizó
+}
+
+// scene.add(new THREE.AxesHelper(10))
+
 //*Postprocesado
 
 const composer = new EffectComposer(renderer)
@@ -39,6 +91,8 @@ loader.load(
   (gltf) => {
     const model = gltf.scene;
     scene.add(model);
+    scene.add(particles);
+
 
     // Configurar sombras en las mallas del modelo
     model.traverse((child) => {
@@ -100,16 +154,15 @@ window.addEventListener('keydown', (event) => {
 
 // Animación
 function animate() {
-
-  //TODO Remover para que el canvas sea responsive
-  // resizeRendererAndCamera(renderer, camera)
+  resizeRendererAndCamera(renderer, camera)
   const delta = 0.009
   // Actualizar el mixer de animación si existe
   if (mixer) {
     mixer.update(delta);
   }
 
-  renderer.render(scene, camera);
+  // renderer.render(scene, camera);
+  animateParticles()
   composer.render()
   controls.update();
 }
